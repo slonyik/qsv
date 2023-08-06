@@ -1049,7 +1049,7 @@ fn apply_operations(
     for op in ops_vec {
         match op {
             Operations::Len => {
-                *cell = cell.len().to_string();
+                *cell = cell.chars().count().to_string();
             }
             Operations::Lower => {
                 *cell = cell.to_lowercase();
