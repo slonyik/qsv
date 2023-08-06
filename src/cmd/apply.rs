@@ -392,6 +392,7 @@ use strsim::{
 use strum_macros::EnumString;
 use thousands::{policies, Separable, SeparatorPolicy};
 use titlecase::titlecase;
+use unicode_segmentation::UnicodeSegmentation;
 use vader_sentiment::SentimentIntensityAnalyzer;
 use whatlang::detect;
 
@@ -1049,7 +1050,7 @@ fn apply_operations(
     for op in ops_vec {
         match op {
             Operations::Len => {
-                *cell = cell.len().to_string();
+                *cell = cell.graphemes(true).collect::<Vec<&str>>().len().to_string();
             }
             Operations::Lower => {
                 *cell = cell.to_lowercase();

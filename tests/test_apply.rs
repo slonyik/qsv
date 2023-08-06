@@ -562,6 +562,33 @@ fn apply_ops_empty_shortcircuit() {
 }
 
 #[test]
+fn apply_ops_len_utf8() {
+    let wrk = Workdir::new("apply");
+    wrk.create(
+        "data.csv",
+        vec![
+            svec!["桁_ID","植物名","いくつかのテキスト"],
+            svec!["1","a","aa"],
+            svec!["2","bb","bbb"],
+            svec!["3","マンゴー","Süd München Fußball"],
+            svec!["4","aa","😀😁"],
+        ],
+    );
+    let mut cmd = wrk.command("apply");
+    cmd.arg("operations").arg("len").arg("2,3").arg("data.csv");
+    let got: Vec<Vec<String>> = wrk.read_stdout(&mut cmd);
+
+    let expected = vec![
+        svec!["桁_ID","植物名","いくつかのテキスト"],
+        svec!["1","1","2"],
+        svec!["2","2","3"],
+        svec!["3","4","19"],
+        svec!["4","2","2"],
+    ];
+    assert_eq!(got, expected);
+}
+
+#[test]
 fn apply_ops_titlecase() {
     let wrk = Workdir::new("apply");
     wrk.create(
