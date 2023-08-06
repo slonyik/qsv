@@ -24,6 +24,7 @@ fmt options:
     --quote-never              Never put quotes around any value.
     --escape <arg>             The escape character to use. When not specified,
                                quotes are escaped by doubling them.
+    --clamp <arg>              limit cell length [default: 80]
 
 Common options:
     -h, --help             Display this message

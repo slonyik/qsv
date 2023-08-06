@@ -55,6 +55,8 @@ It has 36 supported operations:
   * round: Round numeric values to the specified number of decimal places using
       Midpoint Nearest Even Rounding Strategy AKA "Bankers Rounding."
       Specify the number of decimal places with --formatstr (default: 3).
+  * clamp: Clamp string to the specified number of characters.
+      Specify the max number of characters with --formatstr (default: 80).
   * thousands: Add thousands separators to numeric values.
       Specify the separator policy with --formatstr (default: comma). The valid policies are:
       comma, dot, space, underscore, hexfour (place a space every four hex digits) and
@@ -426,6 +428,7 @@ enum Operations {
     Regex_Replace,
     Replace,
     Round,
+    Clamp,
     Rtrim,
     Sentiment,
     Simdl,
@@ -479,6 +482,7 @@ static REGEX_REPLACE: OnceLock<Regex> = OnceLock::new();
 static SENTIMENT_ANALYZER: OnceLock<SentimentIntensityAnalyzer> = OnceLock::new();
 static THOUSANDS_POLICY: OnceLock<SeparatorPolicy> = OnceLock::new();
 static ROUND_PLACES: OnceLock<u32> = OnceLock::new();
+static CLAMP_LENGTH: OnceLock<usize> = OnceLock::new();
 static WHATLANG_CONFIDENCE_THRESHOLD: OnceLock<f64> = OnceLock::new();
 
 // default confidence threshold for whatlang language detection - 90% confidence
@@ -486,6 +490,9 @@ const DEFAULT_THRESHOLD: f64 = 0.9;
 
 // default number of decimal places to round to
 const DEFAULT_ROUND_PLACES: u32 = 3;
+
+// default number of chars to keep wehn clamping
+const DEFAULT_CLAMP_LENGHT: usize = 80;
 
 // for thousands operator
 static INDIANCOMMA_POLICY: SeparatorPolicy = SeparatorPolicy {
@@ -971,6 +978,18 @@ fn validate_operations(
                     return fail!("Cannot initialize Round precision.");
                 };
             }
+            Operations::Clamp => {
+                if CLAMP_LENGTH
+                    .set(
+                        flag_formatstr
+                            .parse::<usize>()
+                            .unwrap_or(DEFAULT_CLAMP_LENGHT),
+                    )
+                    .is_err()
+                {
+                    return fail!("Cannot initialize Clamp limit.");
+                };
+            }
             Operations::Whatlang => {
                 if flag_new_column.is_none() {
                     return fail!("--new_column (-c) is required for whatlang language detection.");
@@ -1160,6 +1179,9 @@ fn apply_operations(
                 if let Ok(num) = fast_float::parse::<f64, _>(&cell) {
                     *cell = util::round_num(num, *ROUND_PLACES.get().unwrap());
                 }
+            }
+            Operations::Clamp => {
+                *cell = cell.chars().take(*CLAMP_LENGTH.get().unwrap()).collect();
             }
             Operations::Currencytonum => {
                 // this is a workaround around current limitation of qsv-currency
